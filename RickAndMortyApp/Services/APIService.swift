@@ -26,15 +26,22 @@ final class APIService {
         }.resume()
     }
     //Gets image of character
-    func getImage(urlToImage: String, _ completion: @escaping ((Data) -> Void))  {
-        guard let imageURL = URL(string: urlToImage) else { return }
+    func getImages(urlArray: [String], _ completion: @escaping ([Data]) -> Void) {
+        var imagesArray = [Data]()
+        let group = DispatchGroup()
         
-        let imageRequest = URLRequest(url: imageURL)
-        URLSession.shared.dataTask(with: imageRequest) { data, response, error in
-            guard let data = data else { return }
-            completion(data)
-            
-        }.resume()
+        for elem in urlArray {
+            let request = URLRequest(url: URL(string: elem)!)
+            group.enter()
+            URLSession.shared.dataTask(with: request) { data, response, error in
+                guard let data else { return }
+                imagesArray.append(data)
+                group.leave()
+            }.resume()
+        }
+        group.notify(queue: .global()) {
+            completion(imagesArray)
+        }
     }
     //Gets origin
     func getOrigin(urlOrigin: String, _ completion: @escaping (ExactOrigin) -> Void) {
@@ -64,6 +71,17 @@ final class APIService {
         group.notify(queue: .global()) {
             completion(episodes)
         }
+    }
+    
+    func getImage(urlImg: String, _ completion: @escaping (Data) -> Void){
+        guard let imageURL = URL(string: urlImg) else { return }
+        
+        let imageRequest = URLRequest(url: imageURL)
+        URLSession.shared.dataTask(with: imageRequest) { data, response, error in
+            guard let data = data else { return }
+            completion(data)
+            
+        }.resume()
     }
 }
 

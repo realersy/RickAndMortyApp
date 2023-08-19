@@ -8,7 +8,7 @@
 import UIKit
 
 class MainViewController: UIViewController {
-
+    
     // MARK: Properties
     let collectionView: UICollectionView = {
         let layout = UICollectionViewFlowLayout()
@@ -19,34 +19,40 @@ class MainViewController: UIViewController {
     }()
     
     var retrievedResponse: Response?
-    var imagesArray = [UIImage]()
+    var imagesArray = [Data]()
+    
+    var imageData: Data?
     
     //MARK: Life cycle
     override func viewDidLoad() {
         super.viewDidLoad()
-        
         let semaphore1 = DispatchSemaphore(value: 0)
-
+        
         APIService.shared.getResults { resp in
             self.retrievedResponse = resp
             semaphore1.signal()
         }
         semaphore1.wait()
         
-        let semaphore2 = DispatchSemaphore(value: 0)
-        for result in (retrievedResponse?.results)! {
-            APIService.shared.getImage(urlToImage: result.image) { data in
-                self.imagesArray.append(UIImage(data: data)!)
-                semaphore2.signal()
-            }
-        }
+//        var imagesURL: [String] = []
+//
+//        for i in 0..<(retrievedResponse?.results.count)! {
+//            imagesURL.append((retrievedResponse?.results[i].image)!)
+//        }
+//        print(imagesURL)
+//        let semaphore2 = DispatchSemaphore(value: 0)
+//        APIService.shared.getImages(urlArray: imagesURL) { images in
+//            self.imagesArray = images
+//            semaphore2.signal()
+//        }
         
-        semaphore2.wait()
+        //semaphore2.wait()
+        
         setupNav()
         setupCollectionView()
     }
-    
 }
+    
 //MARK: Setups
 extension MainViewController {
     private func setupCollectionView(){
@@ -76,8 +82,15 @@ extension MainViewController: UICollectionViewDelegate, UICollectionViewDataSour
     }
     func collectionView(_ collectionView: UICollectionView, cellForItemAt indexPath: IndexPath) -> UICollectionViewCell {
         let cell = collectionView.dequeueReusableCell(withReuseIdentifier: CustomCollectionViewCell.cellID, for: indexPath) as! CustomCollectionViewCell
+        
         cell.configureLabelText(name: retrievedResponse?.results[indexPath.row].name ?? "nil")
-        cell.configureImage(imageArray: imagesArray, indexPath: indexPath)
+        let semaphore = DispatchSemaphore(value: 0)
+        APIService.shared.getImage(urlImg: (retrievedResponse?.results[indexPath.row].image)!) { data in
+            self.imageData = data
+            semaphore.signal()
+        }
+        semaphore.wait()
+        cell.configureImage(imageData: imageData!)
         
         return cell
     }

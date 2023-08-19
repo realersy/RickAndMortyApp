@@ -67,8 +67,8 @@ extension CustomCollectionViewCell {
         ])
     }
     //MARK: Configure Labels and Images
-    func configureImage(imageArray: [UIImage], indexPath: IndexPath){
-        imageView.image = imageArray[indexPath.row]
+    func configureImage(imageData: Data){
+        imageView.image = UIImage(data: imageData)
     }
     func configureLabelText(name: String){
         nameLabel.text = name
